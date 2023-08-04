@@ -36,6 +36,9 @@ This version aims to collect NMEA strings to also provide depth sensor informati
 Notes
 -----
 TO TEST: run `setup.py` and check the build output directory–should be like `build/scripts-3.11/mavproxy.py` or something.
+  
+Once mavproxy is running, do `module load depthfinder`, then, `depthfinder`  
+
 Also, you may need to uninstall mavproxy if it runs from the terminal (installed by pip to somewhere in path) to avoid confusion.
 
 * mavproxy modules extend `mp_module.MPModule`

@@ -33,14 +33,20 @@ Hermes overview
 
 This version aims to collect NMEA strings to also provide depth sensor information as a telemetry string, combining this and GPS info and stuff from the FC to create a depth map.
 
-Notes
------
-TO TEST: run `setup.py` and check the build output directory–should be like `build/scripts-3.11/mavproxy.py` or something.
-  
-Once mavproxy is running, do `module load depthfinder`, then, `depthfinder`  
+Build & test procedure
+----------------------
+1. clone the repo. be on the right branch. 
+2. if you have a shell terminal, run `python3 setup.py build install --user`
+3. run mavproxy from `build/scripts-3.11/mavproxy.py`. 
+    - when testing with FC hardware, be sure to specify the connection point with `--master` (see https://ardupilot.org/mavproxy/docs/getting_started/starting.html#master)
+    - if you're using python2 or some cringe, the mavproxy file might be at a different location
+    - you may need to uninstall mavproxy or other dependencies from other locations. be sure to read the error messages carefully!
+4. if you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
+5. load the depthfinder module via `module load depthfinder`
+6. run `depthfinder status` or whatever is implemented to help debug.
 
-Also, you may need to uninstall mavproxy if it runs from the terminal (installed by pip to somewhere in path) to avoid confusion.
-
+Random notes
+------------
 * mavproxy modules extend `mp_module.MPModule`
 * `mavproxy_serial` module handles the serial comm stuff
 * `mavproxy_link` seems to do the admin work of holding udp/tcp links, but the actual socket activity is handled elsewhere
@@ -51,3 +57,15 @@ Also, you may need to uninstall mavproxy if it runs from the terminal (installed
 * wtf is the `MPState` object lol this is also a property of literally every module
     * holds all the MPSettings  
     * 
+
+Errors / unresolved bugs
+------------------------
+
+Friggn thing crashes after a while if I'm not doing anything, it seems.
+```
+Exception in thread log_writer:
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1038, in _bootstrap_inner
+    self.run()
+  File "/opt/homebrew/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 975, in run
+```

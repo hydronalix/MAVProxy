@@ -26,6 +26,8 @@ class depthfinder(mp_module.MPModule):
         self.status_callcount = 0
         self.boredom_interval = 10 # seconds
         self.last_bored = time.time()
+        self.lat = 0.0
+        self.lon = 0.0
 
         self.packets_mytarget = 0
         self.packets_othertarget = 0
@@ -54,10 +56,12 @@ class depthfinder(mp_module.MPModule):
         '''returns information about module'''
         self.status_callcount += 1
         self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  My target positions=%(packets_mytarget)u  Other target positions=%(packets_mytarget)u" %
+        return("status called %(status_callcount)d times.  My target positions=%(my_lat)f, %(my_lon)f (from %(packets_mytarget)u packets);  Other target positions=%(packets_mytarget)u" %
                {"status_callcount": self.status_callcount,
                 "packets_mytarget": self.packets_mytarget,
                 "packets_othertarget": self.packets_othertarget,
+                "my_lat": self.lat,
+                "my_lon": self.lon,
                })
 
     def boredom_message(self):
@@ -66,7 +70,11 @@ class depthfinder(mp_module.MPModule):
         return ("I'm bored")
 
     def idle_task(self):
-        '''called rapidly by mavproxy'''
+        '''
+        called rapidly by mavproxy
+        
+        i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
+        '''
         now = time.time()
         if now-self.last_bored > self.boredom_interval:
             self.last_bored = now
@@ -77,10 +85,23 @@ class depthfinder(mp_module.MPModule):
                                             message)
 
     def mavlink_packet(self, m):
-        '''handle mavlink packets'''
+        '''
+        handle mavlink packets
+        
+        The m object is a mavlink message object. You can check its type via the get_type() method.
+        To figure out the fields available in the message, see https://mavlink.io/en/messages/common.html.
+        They should just be accessible as attributes of the m object, as you can see below. Python moment.
+
+        Some todos for this function:
+        [ ] check for some status message that tells us if we've landed (on the surface of the water)
+        [ ] record lat/lon to a file, but only if we've landed
+        [ ] record depth to a file, but only if we've landed (this might need to go elsewhere)
+        '''
         if m.get_type() == 'GLOBAL_POSITION_INT':
             if self.settings.target_system == 0 or self.settings.target_system == m.get_srcSystem():
                 self.packets_mytarget += 1
+                self.lat = m.lat
+                self.lon = m.lon
             else:
                 self.packets_othertarget += 1
 

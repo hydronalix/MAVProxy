@@ -8,6 +8,7 @@ dist/
 gtest/
 *.tlog
 *.raw
+*.parm
 MANIFEST
 *.egg-info
 .DS_Store

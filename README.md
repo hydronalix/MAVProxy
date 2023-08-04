@@ -26,3 +26,11 @@ Lead Developers: Andrew Tridgell and Peter Barker
 Windows Maintainer: Stephen Dade
 
 MacOS Maintainer: Rhys Mainwaring
+
+
+Hermes overview
+---------------
+
+This version aims to collect NMEA strings to also provide depth sensor information as a telemetry string, combining this and GPS info and stuff from the FC to create a depth map.
+
+

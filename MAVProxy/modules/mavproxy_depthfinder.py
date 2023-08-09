@@ -28,6 +28,7 @@ class depthfinder(mp_module.MPModule):
         self.last_bored = time.time()
         self.lat = 0.0
         self.lon = 0.0
+        self.landed = False
 
         self.packets_mytarget = 0
         self.packets_othertarget = 0
@@ -93,7 +94,7 @@ class depthfinder(mp_module.MPModule):
         They should just be accessible as attributes of the m object, as you can see below. Python moment.
 
         Some todos for this function:
-        [ ] check for some status message that tells us if we've landed (on the surface of the water)
+        [x] check for some status message that tells us if we've landed (on the surface of the water)
         [ ] record lat/lon to a file, but only if we've landed
         [ ] record depth to a file, but only if we've landed (this might need to go elsewhere)
         '''
@@ -104,6 +105,11 @@ class depthfinder(mp_module.MPModule):
                 self.lon = m.lon
             else:
                 self.packets_othertarget += 1
+        elif m.get_type() == 'EXTENDED_SYS_STATE':
+            if m.landed_state == 4: # see: https://mavlink.io/en/messages/common.html#MAV_LANDED_STATE
+                self.landed = True
+            else:
+                self.landed = False
 
 def init(mpstate):
     '''initialise module'''

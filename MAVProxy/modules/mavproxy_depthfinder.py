@@ -29,6 +29,9 @@ class depthfinder(mp_module.MPModule):
         self.lat = 0.0
         self.lon = 0.0
         self.landed = False
+        self.current_depth = 0.0
+        self.depth_readings = []
+        self.num_readings = 10
 
         self.packets_mytarget = 0
         self.packets_othertarget = 0
@@ -36,11 +39,11 @@ class depthfinder(mp_module.MPModule):
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
           ])
-        self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)'])
+        self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)', 'capture'])
 
     def usage(self):
         '''show help on command line options'''
-        return "Usage: depthfinder <status|set>"
+        return "Usage: depthfinder <status|set|caputre>"
 
     def cmd_depthfinder(self, args):
         '''control behaviour of the module'''
@@ -50,8 +53,18 @@ class depthfinder(mp_module.MPModule):
             print(self.status())
         elif args[0] == "set":
             self.depthfinder_settings.command(args[1:])
+        elif args[0] == "capture":
+            print('depth is %d at %d, %d' %
+                  (
+                    self.current_depth,
+                    self.lat,
+                    self.lon   
+                  ))
         else:
             print(self.usage())
+    
+    def parse_char(self):
+        print("todo! ahgaha")
 
     def status(self):
         '''returns information about module'''

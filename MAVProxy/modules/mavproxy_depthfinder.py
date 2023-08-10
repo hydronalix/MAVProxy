@@ -39,14 +39,17 @@ class depthfinder(mp_module.MPModule):
         self.ser.baudrate = 4800
         self.ser.port = '/dev/ttyS0'
         self.fileNum = 1
-        self.logFile = "/home/pi/file" +str(self.fileNum)+".csv"
+        self.home_dir = os.path.expanduser('~')
+        self.logFile = self.home_dir + "/file" +str(self.fileNum)+".csv"
+        
 
         while os.path.isfile(self.logFile):
             self.fileNum += 1
-            self.logFile = "/home/pi/file" +str(self.fileNum)+".csv"
+            self.logFile = self.home_dir + "/file" +str(self.fileNum)+".csv"
 
         self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
         self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
+        self.file.close()
 
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
@@ -105,6 +108,11 @@ class depthfinder(mp_module.MPModule):
         charCheck = '*'
         charEnd = '\\'
 
+        try:
+            self.ser.open()
+        except serial.SerialException as e:
+            print("Error opening serial port: " + str(e))
+            return
         raw = self.ser.readline()
 
         #check if in correct format
@@ -128,7 +136,9 @@ class depthfinder(mp_module.MPModule):
                         print("Temperature: "+nmeaList[1]+"C") #for debug
 
             #write to file everytime a NMEA line is read
+            self.file.open(self.logFile, "a")
             self.file.write(self.lat+"\t"+self.lon+"\t"+self.current_depth+"\t\t"+self.current_temp+"\n")
+            self.file.close()
         return    
 
     def mavlink_packet(self, m):

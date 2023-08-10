@@ -31,7 +31,9 @@ class depthfinder(mp_module.MPModule):
         self.lon = 0.0
         self.landed = False
         self.current_depth = 0.0
-        self.depth_readings = []
+        self.current_temp = 0.0
+        self.depth_readings = []        #TODO: make this a circular buffer
+        self.temp_readings = []  
         self.num_readings = 10
         self.ser = serial.Serial()
         self.ser.baudrate = 4800
@@ -64,6 +66,7 @@ class depthfinder(mp_module.MPModule):
         elif args[0] == "set":
             self.depthfinder_settings.command(args[1:])
         elif args[0] == "capture":
+            self.nmea_packet()
             print('depth is %d at %d, %d' %
                   (
                     self.current_depth,
@@ -94,6 +97,8 @@ class depthfinder(mp_module.MPModule):
         '''
         if self.landed == False:
             return
+        else:
+            self.nmea_packet()
         
     def nmea_packet(self):
         charBegin = '$'
@@ -116,14 +121,14 @@ class depthfinder(mp_module.MPModule):
         else:    
             nmeaList = result.split(",")
             if 'SDDPT' in nmeaList:
-                        depth = nmeaList[1]
+                        self.current_depth = nmeaList[1]
                         print("Depth: "+nmeaList[1]) #for debug
             if 'YXMTW' in nmeaList:
-                        temp = nmeaList[1]
+                        self.current_temp = nmeaList[1]
                         print("Temperature: "+nmeaList[1]+"C") #for debug
 
             #write to file everytime a NMEA line is read
-            self.file.write(self.lat+"\t"+self.lon+"\t"+depth+"\t\t"+temp+"\n")
+            self.file.write(self.lat+"\t"+self.lon+"\t"+self.current_depth+"\t\t"+self.current_temp+"\n")
         return    
 
     def mavlink_packet(self, m):
@@ -133,11 +138,6 @@ class depthfinder(mp_module.MPModule):
         The m object is a mavlink message object. You can check its type via the get_type() method.
         To figure out the fields available in the message, see https://mavlink.io/en/messages/common.html.
         They should just be accessible as attributes of the m object, as you can see below. Python moment.
-
-        Some todos for this function:
-        [x] check for some status message that tells us if we've landed (on the surface of the water)
-        [x] record lat/lon to a file, but only if we've landed
-        [x] record depth to a file, but only if we've landed (this might need to go elsewhere)
         '''
         if m.get_type() == 'GLOBAL_POSITION_INT':
             if self.settings.target_system == 0 or self.settings.target_system == m.get_srcSystem():

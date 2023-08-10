@@ -13,6 +13,7 @@ import sys
 from pymavlink import mavutil
 import errno
 import time
+import serial
 
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_util
@@ -32,9 +33,18 @@ class depthfinder(mp_module.MPModule):
         self.current_depth = 0.0
         self.depth_readings = []
         self.num_readings = 10
+        self.ser = serial.Serial()
+        self.ser.baudrate = 4800
+        self.ser.port = '/dev/ttyS0'
+        self.fileNum = 1
+        self.logFile = "/home/pi/file" +str(self.fileNum)+".csv"
 
-        self.packets_mytarget = 0
-        self.packets_othertarget = 0
+        while os.path.isfile(self.logFile):
+            self.fileNum += 1
+            self.logFile = "/home/pi/file" +str(self.fileNum)+".csv"
+
+        self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
+        self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
 
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
@@ -70,18 +80,11 @@ class depthfinder(mp_module.MPModule):
         '''returns information about module'''
         self.status_callcount += 1
         self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  My target positions=%(my_lat)f, %(my_lon)f (from %(packets_mytarget)u packets);  Other target positions=%(packets_mytarget)u" %
+        return("status called %(status_callcount)d times.  My target position=%(my_lat)f, %(my_lon)f" %
                {"status_callcount": self.status_callcount,
-                "packets_mytarget": self.packets_mytarget,
-                "packets_othertarget": self.packets_othertarget,
                 "my_lat": self.lat,
                 "my_lon": self.lon,
                })
-
-    def boredom_message(self):
-        if self.depthfinder_settings.verbose:
-            return ("I'm very bored")
-        return ("I'm bored")
 
     def idle_task(self):
         '''
@@ -89,14 +92,39 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-        now = time.time()
-        if now-self.last_bored > self.boredom_interval:
-            self.last_bored = now
-            message = self.boredom_message()
-            self.say("%s: %s" % (self.name,message))
-            # See if whatever we're connected to would like to play:
-            self.master.mav.statustext_send(mavutil.mavlink.MAV_SEVERITY_NOTICE,
-                                            message)
+        if self.landed == False:
+            return
+        
+    def nmea_packet(self):
+        charBegin = '$'
+        charCheck = '*'
+        charEnd = '\\'
+
+        raw = self.ser.readline()
+
+        #check if in correct format
+        if raw[-2:] != b"\x0d\x0a":
+            print("Read Error")
+            return
+        rawS = str(raw)
+        result = rawS[rawS.find(charBegin)+1 : rawS.find(charCheck)]
+        checkSum = rawS[rawS.find(charCheck)+1 : rawS.find(charEnd)]
+        #confirm checksum
+        if bool(checkSum) != bool(result):
+            print("Checksum doesn't match")
+            return
+        else:    
+            nmeaList = result.split(",")
+            if 'SDDPT' in nmeaList:
+                        depth = nmeaList[1]
+                        print("Depth: "+nmeaList[1]) #for debug
+            if 'YXMTW' in nmeaList:
+                        temp = nmeaList[1]
+                        print("Temperature: "+nmeaList[1]+"C") #for debug
+
+            #write to file everytime a NMEA line is read
+            self.file.write(self.lat+"\t"+self.lon+"\t"+depth+"\t\t"+temp+"\n")
+        return    
 
     def mavlink_packet(self, m):
         '''
@@ -108,8 +136,8 @@ class depthfinder(mp_module.MPModule):
 
         Some todos for this function:
         [x] check for some status message that tells us if we've landed (on the surface of the water)
-        [ ] record lat/lon to a file, but only if we've landed
-        [ ] record depth to a file, but only if we've landed (this might need to go elsewhere)
+        [x] record lat/lon to a file, but only if we've landed
+        [x] record depth to a file, but only if we've landed (this might need to go elsewhere)
         '''
         if m.get_type() == 'GLOBAL_POSITION_INT':
             if self.settings.target_system == 0 or self.settings.target_system == m.get_srcSystem():

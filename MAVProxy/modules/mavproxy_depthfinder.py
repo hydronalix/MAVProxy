@@ -81,10 +81,15 @@ class depthfinder(mp_module.MPModule):
         '''returns information about module'''
         self.status_callcount += 1
         self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  My target position=%(my_lat)f, %(my_lon)f" %
+        return("status called %(status_callcount)d times.  \n
+                My target position=%(my_lat)f, %(my_lon)f \n
+                Depth=%(my_depth)%f, Temp=%(my_temp)%f \n 
+                " %
                {"status_callcount": self.status_callcount,
                 "my_lat": self.lat,
                 "my_lon": self.lon,
+                "my_depth": self.current_depth,
+                "my_temp": self.current_temp,
                })
 
     def idle_task(self):
@@ -126,11 +131,13 @@ class depthfinder(mp_module.MPModule):
         else:    
             nmeaList = result.split(",")
             if 'SDDPT' in nmeaList:
-                        self.current_depth = nmeaList[1]
-                        print("Depth: "+nmeaList[1]) #for debug
+                        self.current_depth = float(nmeaList[1])
+                        if (self.depthfinder_settings.verbose) :
+                            print("Depth: "+nmeaList[1])
             if 'YXMTW' in nmeaList:
-                        self.current_temp = nmeaList[1]
-                        print("Temperature: "+nmeaList[1]+"C") #for debug
+                        self.current_temp = float(nmeaList[1])
+                        if (self.depthfinder_settings.verbose) :
+                            print("Temperature: "+nmeaList[1]+"C")
 
             #write to file everytime a NMEA line is read
             self.file = open(self.logFile, "a")

@@ -70,18 +70,12 @@ class depthfinder(mp_module.MPModule):
             self.depthfinder_settings.command(args[1:])
         elif args[0] == "capture":
             self.nmea_packet()
-            print('depth is %d at %d, %d' %
-                  (
-                    self.current_depth,
-                    self.lat,
-                    self.lon   
-                  ))
+            print(self.current_depth)
+            print(self.lat)
+            print(self.lon)  
         else:
             print(self.usage())
     
-    def parse_char(self):
-        print("todo! ahgaha")
-
     def status(self):
         '''returns information about module'''
         self.status_callcount += 1
@@ -109,10 +103,12 @@ class depthfinder(mp_module.MPModule):
         charEnd = '\\'
 
         try:
-            self.ser.open()
+            if self.ser.isOpen() == False:
+                self.ser.open()
         except serial.SerialException as e:
             print("Error opening serial port: " + str(e))
             return
+
         raw = self.ser.readline()
 
         #check if in correct format

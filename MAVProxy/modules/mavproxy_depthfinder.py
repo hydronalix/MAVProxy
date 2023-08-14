@@ -81,10 +81,7 @@ class depthfinder(mp_module.MPModule):
         '''returns information about module'''
         self.status_callcount += 1
         self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  \n
-                My target position=%(my_lat)f, %(my_lon)f \n
-                Depth=%(my_depth)%f, Temp=%(my_temp)%f \n 
-                " %
+        return("status called %(status_callcount)d times.  \nLAT=%(my_lat)f LON=%(my_lon)f \nDepth=%(my_depth)f, Temp=%(my_temp)f \n " %
                {"status_callcount": self.status_callcount,
                 "my_lat": self.lat,
                 "my_lon": self.lon,
@@ -158,6 +155,8 @@ class depthfinder(mp_module.MPModule):
                 self.packets_mytarget += 1
                 self.lat = m.lat
                 self.lon = m.lon
+                if (self.depthfinder_settings.verbose):
+                    print("got GPS message from FC")
             else:
                 self.packets_othertarget += 1
         elif m.get_type() == 'EXTENDED_SYS_STATE':

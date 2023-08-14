@@ -54,6 +54,7 @@ class depthfinder(mp_module.MPModule):
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
                 ('debug', bool, False),
+                ('target_system', int, 0),
           ])
         self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)', 'capture'])
 
@@ -81,7 +82,7 @@ class depthfinder(mp_module.MPModule):
         '''returns information about module'''
         self.status_callcount += 1
         self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  \nLAT=%(my_lat)f LON=%(my_lon)f \nDepth=%(my_depth)f, Temp=%(my_temp)f \n " %
+        return("status called %(status_callcount)d times.  \nLAT=%(my_lat)d LON=%(my_lon)d \nDepth=%(my_depth)f, Temp=%(my_temp)f \n " %
                {"status_callcount": self.status_callcount,
                 "my_lat": self.lat,
                 "my_lon": self.lon,
@@ -150,13 +151,14 @@ class depthfinder(mp_module.MPModule):
         To figure out the fields available in the message, see https://mavlink.io/en/messages/common.html.
         They should just be accessible as attributes of the m object, as you can see below. Python moment.
         '''
-        if m.get_type() == 'GLOBAL_POSITION_INT':
-            if self.settings.target_system == 0 or self.settings.target_system == m.get_srcSystem():
+
+        if m.get_type() == 'GLOBAL_POSITION_INT': 
+            if (self.depthfinder_settings.verbose):
+                print(f"got GPS message from FC at: {m.get_srcSystem()} ")
+            if self.settings.target_system == 0 or self.depthfinder_settings.target_system == m.get_srcSystem():
                 self.packets_mytarget += 1
                 self.lat = m.lat
                 self.lon = m.lon
-                if (self.depthfinder_settings.verbose):
-                    print("got GPS message from FC")
             else:
                 self.packets_othertarget += 1
         elif m.get_type() == 'EXTENDED_SYS_STATE':

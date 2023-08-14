@@ -27,8 +27,8 @@ class depthfinder(mp_module.MPModule):
         self.status_callcount = 0
         self.boredom_interval = 10 # seconds
         self.last_bored = time.time()
-        self.lat = 0.0
-        self.lon = 0.0
+        self.lat = 0
+        self.lon = 0
         self.landed = False
         self.current_depth = 0.0
         self.current_temp = 0.0
@@ -81,14 +81,7 @@ class depthfinder(mp_module.MPModule):
     def status(self):
         '''returns information about module'''
         self.status_callcount += 1
-        self.last_bored = time.time() # status entertains us
-        return("status called %(status_callcount)d times.  \nLAT=%(my_lat)d LON=%(my_lon)d \nDepth=%(my_depth)f, Temp=%(my_temp)f \n " %
-               {"status_callcount": self.status_callcount,
-                "my_lat": self.lat,
-                "my_lon": self.lon,
-                "my_depth": self.current_depth,
-                "my_temp": self.current_temp,
-               })
+        return f"status callouts: {self.status_callcount} \n lat={self.lat} lon={self.lon} \n depth={self.current_depth} temp={self.current_temp}" 
 
     def idle_task(self):
         '''
@@ -156,11 +149,15 @@ class depthfinder(mp_module.MPModule):
             if (self.depthfinder_settings.verbose):
                 print(f"got GPS message from FC at: {m.get_srcSystem()} ")
             if self.settings.target_system == 0 or self.depthfinder_settings.target_system == m.get_srcSystem():
-                self.packets_mytarget += 1
-                self.lat = m.lat
-                self.lon = m.lon
-            else:
-                self.packets_othertarget += 1
+                if (self.depthfinder_settings.verbose):
+                    print(f"msg pos: {m.lat} {m.lon}")
+                try:
+                    self.lat = m.lat
+                    self.lon = m.lon
+                except Exception as e:
+                    print(e)
+                if (self.depthfinder_settings.verbose):
+                    print(f"we are at: {self.lat} {self.lon}")
         elif m.get_type() == 'EXTENDED_SYS_STATE':
             if m.landed_state == 4: # see: https://mavlink.io/en/messages/common.html#MAV_LANDED_STATE
                 self.landed = True

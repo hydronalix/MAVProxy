@@ -53,6 +53,7 @@ class depthfinder(mp_module.MPModule):
 
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
+                ('debug', bool, False),
           ])
         self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)', 'capture'])
 
@@ -92,10 +93,10 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-        if self.landed == False:
-            return
-        else:
+        if (self.landed == True) or (self.depthfinder_settings.debug == True):
             self.nmea_packet()
+        else:
+            return
         
     def nmea_packet(self):
         charBegin = '$'
@@ -132,7 +133,7 @@ class depthfinder(mp_module.MPModule):
                         print("Temperature: "+nmeaList[1]+"C") #for debug
 
             #write to file everytime a NMEA line is read
-            self.file.open(self.logFile, "a")
+            self.file = open(self.logFile, "a")
             self.file.write(self.lat+"\t"+self.lon+"\t"+self.current_depth+"\t\t"+self.current_temp+"\n")
             self.file.close()
         return    

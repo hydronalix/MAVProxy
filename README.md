@@ -33,6 +33,14 @@ Hermes overview
 
 This version aims to collect NMEA strings to also provide depth sensor information as a telemetry string, combining this and GPS info and stuff from the FC to create a depth map.
 
+Usage notes
+-----------
+- For a list of changeable parameters, call `depthfinder set`
+- Does not write to a file by default! I haven't fine-tuned the behavior yet, so use `depthfinder set write_on_gps true` to write GPS & NMEA data to the logfile every time we get a GPS message, or use `depthfinder write` to write *one line* to the logfile (with whatever you'd see by calling `depthfinder status`
+- NMEA does not get automatically called in the `idle_task` loop--use `depthfinder set debug true` to bypass the landed state thing and update on NMEA message receipt.
+- If things seem like they're breaking, use `depthfinder set verbose true`.  
+- The default target system ID is 0. You may need to change this to receive GPS messages and update module lat/lon. Use `verbose` to see what sys ID you're receiving messages from.
+
 Build & test procedure
 ----------------------
 1. clone the repo. be on the right branch. 

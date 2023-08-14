@@ -55,12 +55,13 @@ class depthfinder(mp_module.MPModule):
             [ ('verbose', bool, False),
                 ('debug', bool, False),
                 ('target_system', int, 0),
+                ('write_on_gps', bool, False),
           ])
         self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)', 'capture'])
 
     def usage(self):
         '''show help on command line options'''
-        return "Usage: depthfinder <status|set|caputre>"
+        return "Usage: depthfinder <status|set|caputre|write>"
 
     def cmd_depthfinder(self, args):
         '''control behaviour of the module'''
@@ -75,6 +76,9 @@ class depthfinder(mp_module.MPModule):
             print(self.current_depth)
             print(self.lat)
             print(self.lon)  
+        elif args[0] == "write":
+            self.write_status()
+            print(f"wrote current data as file entry to {self.logFile}")
         else:
             print(self.usage())
     
@@ -93,6 +97,14 @@ class depthfinder(mp_module.MPModule):
             self.nmea_packet()
         else:
             return
+
+    def write_status(self):
+        try:
+            self.file = open(self.logFile, "a")
+            self.file.write(f"{self.lat},{self.lon},{self.current_depth},{self.current_temp}\n")
+            self.file.close()
+        except Exception as e:
+            print(e)
         
     def nmea_packet(self):
         charBegin = '$'
@@ -130,10 +142,8 @@ class depthfinder(mp_module.MPModule):
                         if (self.depthfinder_settings.verbose) :
                             print("Temperature: "+nmeaList[1]+"C")
 
-            #write to file everytime a NMEA line is read
-            self.file = open(self.logFile, "a")
-            self.file.write(self.lat+"\t"+self.lon+"\t"+self.current_depth+"\t\t"+self.current_temp+"\n")
-            self.file.close()
+        #TODO write to file here?
+
         return    
 
     def mavlink_packet(self, m):
@@ -154,6 +164,8 @@ class depthfinder(mp_module.MPModule):
                 try:
                     self.lat = m.lat
                     self.lon = m.lon
+                    if self.depthfinder_settings.write_on_gps :
+                        self.write_status()
                 except Exception as e:
                     print(e)
                 if (self.depthfinder_settings.verbose):

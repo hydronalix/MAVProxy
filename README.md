@@ -33,8 +33,8 @@ Hermes overview
 
 This version aims to collect NMEA strings to also provide depth sensor information as a telemetry string, combining this and GPS info and stuff from the FC to create a depth map.
 
-Usage notes
------------
+Mavproxy module usage notes
+---------------------------
 - For a list of changeable parameters, call `depthfinder set`
 - Does not write to a file by default! I haven't fine-tuned the behavior yet, so use `depthfinder set write_on_gps true` to write GPS & NMEA data to the logfile every time we get a GPS message, or use `depthfinder write` to write *one line* to the logfile (with whatever you'd see by calling `depthfinder status`
 - NMEA does not get automatically called in the `idle_task` loop--use `depthfinder set debug true` to bypass the landed state thing and update on NMEA message receipt.
@@ -52,6 +52,23 @@ Build & test procedure
 4. if you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
 5. load the depthfinder module via `module load depthfinder`
 6. run `depthfinder status` or whatever is implemented to help debug.
+
+Land & continue mission config
+------------------------------
+configuring the vehicle:
+* set AUTO_OPTIONS to allow takeoff without raising throttle. maybe this should be set on the AMYs
+* set MIS_OPTIONS "continue after land" bit TRUE.
+* disable DISARM_DELAY which may or may not be a thing
+
+mission planning:
+* first portion is ez: takeoff, waypoint(s), land
+* for the next item, use a "DO_AUX_FUNCTION" to disarm/ar or do other spicy behavior. this may be useful for the triggering the depth finder
+* add a delay item
+* probably use another DO_AUX_FUNCTION to ido whatever
+* takeoff, waypoint, land, repeat
+
+for more info see https://www.youtube.com/watch?v=BK3OsNJoF8A
+  
 
 Random notes
 ------------

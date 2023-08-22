@@ -56,9 +56,9 @@ Build & test procedure
 Land & continue mission config
 ------------------------------
 configuring the vehicle:
-* set AUTO_OPTIONS to allow takeoff without raising throttle. maybe this should be set on the AMYs
-* set MIS_OPTIONS "continue after land" bit TRUE.
-* disable DISARM_DELAY which may or may not be a thing
+* set AUTO_OPTIONS "allow takeoff without raising throttle" bit TRUE. this may be helpful in general. also probably the "allow arming" bit as well. if it isn't already.
+* set MIS_OPTIONS "continue after land" bit TRUE. this does not appear to be documented online, however QGC should have checkboxes.
+* set DISARM_DELAY to 0, disabling the functionality. automatic disarming can mess with things.
 
 mission planning:
 * first portion is ez: takeoff, waypoint(s), land

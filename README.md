@@ -47,7 +47,7 @@ Build & test procedure
 2. if you have a shell terminal, run `python3 setup.py build install --user`
 3. run mavproxy from `build/scripts-3.11/mavproxy.py`. 
     - when testing with FC hardware, be sure to specify the connection point with `--master` (see https://ardupilot.org/mavproxy/docs/getting_started/starting.html#master)
-    - if you're using python2 or some cringe, the mavproxy file might be at a different location
+    - if you're using python2 or some cringe, the mavproxy file might be at a different location: this is the case on raspberry pi, since the particular one I was using built to python 3.7 for some reason
     - you may need to uninstall mavproxy or other dependencies from other locations. be sure to read the error messages carefully!
 4. if you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
 5. load the depthfinder module via `module load depthfinder`

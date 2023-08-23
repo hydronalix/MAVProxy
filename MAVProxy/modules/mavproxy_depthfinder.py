@@ -173,11 +173,15 @@ class depthfinder(mp_module.MPModule):
                 if (self.depthfinder_settings.verbose):
                     print(f"we are at: {self.lat} {self.lon}")
         elif m.get_type() == 'EXTENDED_SYS_STATE':
+            if (self.depthfinder_settings.verbose):
+                print(f"landing state is: {m.landed_state}")
             if m.landed_state == 1: # see: https://mavlink.io/en/messages/common.html#MAV_LANDED_STATE
                 self.landed = True
             else:
                 self.landed = False
         elif m.get_type() == 'MISSION_CURRENT': # check if mission is active
+            if (self.depthfinder_settings.verbose):
+                print(f"mission state is: {m.mission_state}")
             if m.mission_state == 3:
                 self.mission_active == True
             else:

@@ -41,6 +41,7 @@ class depthfinder(mp_module.MPModule):
         self.fileNum = 1
         self.home_dir = os.path.expanduser('~')
         self.logFile = self.home_dir + "/file" +str(self.fileNum)+".csv"
+        self.mission_active = False
         
 
         while os.path.isfile(self.logFile):
@@ -93,7 +94,7 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-        if (self.landed == True) or (self.depthfinder_settings.debug == True):
+        if (self.landed == True and self.mission_active == True) or (self.depthfinder_settings.debug == True):
             self.nmea_packet()
             self.write_status()
         else:
@@ -172,10 +173,15 @@ class depthfinder(mp_module.MPModule):
                 if (self.depthfinder_settings.verbose):
                     print(f"we are at: {self.lat} {self.lon}")
         elif m.get_type() == 'EXTENDED_SYS_STATE':
-            if m.landed_state == 4: # see: https://mavlink.io/en/messages/common.html#MAV_LANDED_STATE
+            if m.landed_state == 1: # see: https://mavlink.io/en/messages/common.html#MAV_LANDED_STATE
                 self.landed = True
             else:
                 self.landed = False
+        elif m.get_type() == 'MISSION_CURRENT': # check if mission is active
+            if m.mission_state == 3:
+                self.mission_active == True
+            else:
+                self.mission_active == False
 
 def init(mpstate):
     '''initialise module'''

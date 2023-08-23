@@ -54,7 +54,7 @@ class depthfinder(mp_module.MPModule):
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
                 ('debug', bool, False),
-                ('target_system', int, 0),
+                ('target_system', int, 1),
                 ('write_on_gps', bool, False),
           ])
         self.add_command('depthfinder', self.cmd_depthfinder, "depthfinder module", ['status','set (LOGSETTING)', 'capture'])
@@ -95,6 +95,7 @@ class depthfinder(mp_module.MPModule):
         '''
         if (self.landed == True) or (self.depthfinder_settings.debug == True):
             self.nmea_packet()
+            self.write_status()
         else:
             return
 

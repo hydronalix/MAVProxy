@@ -55,6 +55,7 @@ SSH & Stuff
 * to start the depthfinder, use `module load depthfinder`
 * see below for more specific operational notes
 
+If the static IP setup needs to be changed, see: https://raspberrypi.stackexchange.com/questions/89429/raspbian-stretch-multiple-wifi-networks-with-different-static-ip-routers-dns
 
 Mavproxy module usage notes
 ---------------------------

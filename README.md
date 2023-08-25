@@ -30,8 +30,31 @@ MacOS Maintainer: Rhys Mainwaring
 
 Hermes overview
 ---------------
-
 This version aims to collect NMEA strings to also provide depth sensor information as a telemetry string, combining this and GPS info and stuff from the FC to create a depth map.
+
+Operational notes
+-----------------
+For debugging purposes this drone will work differently than other things: the drone itself is setup on a static IP.
+
+Network/IP setup
+* The drone will automatically connect to both Hydro_Eng or tidepool depending on which one is active. If in the office, only use Hydro_Eng to avoid confusion, or put the router right next to the drone and hope it connects to tidepool (it probably will)
+* On Hydro_Eng, the drone will be at 192.168.50.151
+* On tidepool, the drone will be at 10.1.0.123
+* To connect, your GS *device does not need at static ip*
+* In QGC, navigate to `Q > Application Settings > Comm Links`
+* Add a new connection (if you haven't yet) and name it like "hermes tidepool" or something
+* Change `type` to "UDP"
+* In the `Server Addresses` field, enter [drone IP for the particular network]:14550, click `Add Server`
+* Save the connection and do this again for the other network (tidepool or Hydro_Eng)
+* To connect to the drone, just select the connection & click `Connect` (provided you're on the same network as the drone)
+
+SSH & Stuff
+* Again, depending on the network, ssh to either 10.1.0.123 or 192.168.50.151, or use the hostname which should be h000x on both networks
+* Creds are the same as usual
+* mavproxy stuff is located in the `mavproxy` directory. To start in the field, run `./~/build/scripts-3.7/mavproxy.py --out=udpin:[pi ip]:14550` (whoever's on QGC can now just connect using the method described above while you're ssh'd in)
+* to start the depthfinder, use `module load depthfinder`
+* see below for more specific operational notes
+
 
 Mavproxy module usage notes
 ---------------------------

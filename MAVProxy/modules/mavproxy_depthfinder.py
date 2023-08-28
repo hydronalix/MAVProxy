@@ -62,7 +62,7 @@ class depthfinder(mp_module.MPModule):
 
     def usage(self):
         '''show help on command line options'''
-        return "Usage: depthfinder <status|set|caputre|write>"
+        return "Usage: depthfinder <status|set|capture|write>"
 
     def cmd_depthfinder(self, args):
         '''control behaviour of the module'''

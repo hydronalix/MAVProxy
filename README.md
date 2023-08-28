@@ -87,8 +87,8 @@ configuring the vehicle:
 mission planning:
 * first portion is ez: takeoff, waypoint(s), land
 * for the next item, use a "DO_AUX_FUNCTION" to disarm/ar or do other spicy behavior. this may be useful for the triggering the depth finder
-* add a delay item
-* probably use another DO_AUX_FUNCTION to ido whatever
+* add a "Delay until" item and specify like 5-15 seconds maybe. *do not use the regular delay command or specify MAV_CMD_NAV_DELAY in "Show all values"*
+* probably use another DO_AUX_FUNCTION to do whatever
 * takeoff, waypoint, land, repeat
 
 for more info see https://www.youtube.com/watch?v=BK3OsNJoF8A

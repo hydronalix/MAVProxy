@@ -10,10 +10,7 @@ def package_files(directory):
             paths.append(os.path.join('..', path, filename))
     return paths
 
-package_data = ['modules/mavproxy_map/data/*.jpg', 
-                'modules/mavproxy_map/data/*.png',
-                'modules/mavproxy_mmap/mmap_app/*',
-                'modules/mavproxy_joystick/joysticks/*.yml',
+package_data = ['modules/mavproxy_joystick/joysticks/*.yml',
                 'modules/mavproxy_magical/data/*.mtl',
                 'modules/mavproxy_magical/data/*.obj',
                 'modules/mavproxy_fieldcheck/*.txt',
@@ -76,9 +73,6 @@ on how to use MAVProxy.''',
       packages=['MAVProxy',
                 'MAVProxy.modules',
                 'MAVProxy.modules.mavproxy_fieldcheck',
-                'MAVProxy.modules.mavproxy_map',
-                'MAVProxy.modules.mavproxy_mmap',
-                'MAVProxy.modules.mavproxy_misseditor',
                 'MAVProxy.modules.mavproxy_paramedit',
                 'MAVProxy.modules.mavproxy_smartcamera',
                 'MAVProxy.modules.mavproxy_cesium',
@@ -97,9 +91,7 @@ on how to use MAVProxy.''',
       },
       scripts=['MAVProxy/mavproxy.py',
                'MAVProxy/tools/mavflightview.py',
-               'MAVProxy/tools/MAVExplorer.py',
-               'MAVProxy/modules/mavproxy_map/mp_slipmap.py',
-               'MAVProxy/modules/mavproxy_map/mp_tile.py'],
+               'MAVProxy/tools/MAVExplorer.py'],
       package_data={'MAVProxy':
                     package_data}
     )

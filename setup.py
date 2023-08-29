@@ -11,8 +11,6 @@ def package_files(directory):
     return paths
 
 package_data = ['modules/mavproxy_joystick/joysticks/*.yml',
-                'modules/mavproxy_magical/data/*.mtl',
-                'modules/mavproxy_magical/data/*.obj',
                 'modules/mavproxy_fieldcheck/*.txt',
                 'tools/graphs/*.xml',
 ]
@@ -74,12 +72,7 @@ on how to use MAVProxy.''',
                 'MAVProxy.modules',
                 'MAVProxy.modules.mavproxy_fieldcheck',
                 'MAVProxy.modules.mavproxy_paramedit',
-                'MAVProxy.modules.mavproxy_smartcamera',
-                'MAVProxy.modules.mavproxy_cesium',
                 'MAVProxy.modules.mavproxy_joystick',
-                'MAVProxy.modules.mavproxy_magical',
-                'MAVProxy.modules.mavproxy_optitrack',
-                'MAVProxy.modules.mavproxy_nokov',
                 'MAVProxy.modules.lib',
                 'MAVProxy.modules.lib.ANUGA',
                 'MAVProxy.modules.lib.MacOS',

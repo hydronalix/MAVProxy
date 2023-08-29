@@ -83,7 +83,6 @@ on how to use MAVProxy.''',
         'server': ['flask'],
       },
       scripts=['MAVProxy/mavproxy.py',
-               'MAVProxy/tools/mavflightview.py',
                'MAVProxy/tools/MAVExplorer.py'],
       package_data={'MAVProxy':
                     package_data}

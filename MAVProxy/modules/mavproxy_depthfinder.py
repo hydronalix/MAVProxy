@@ -94,7 +94,7 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-        if (self.landed == True and self.mission_active == True) or (self.depthfinder_settings.debug == True):
+        if (self.landed == True) or (self.depthfinder_settings.debug == True):
             self.nmea_packet()
             self.write_status()
         else:
@@ -179,13 +179,6 @@ class depthfinder(mp_module.MPModule):
                 self.landed = True
             else:
                 self.landed = False
-        elif m.get_type() == 'MISSION_CURRENT': # check if mission is active
-            if (self.depthfinder_settings.verbose):
-                print(f"mission state is: {m.mission_state}")
-            if m.mission_state == 3:
-                self.mission_active == True
-            else:
-                self.mission_active == False
 
 def init(mpstate):
     '''initialise module'''

@@ -57,26 +57,41 @@ SSH & Stuff
 
 If the static IP setup needs to be changed, see: https://raspberrypi.stackexchange.com/questions/89429/raspbian-stretch-multiple-wifi-networks-with-different-static-ip-routers-dns
 
+You can also just make changes to the following files:
+* `/etc/wpa_supplicant/wpa_supplicant.conf`
+* `/etc/dhcpcd.conf`
+
+The content of the files should be evidently repeatable to add other networks or change IP addresses.
+
 Mavproxy module usage notes
 ---------------------------
 - For a list of changeable parameters, call `depthfinder set`
 - Writes to a new file whenever you load the module, which happens on start up. Still need to check if it will write to the file while in land state.
 - NMEA does not get automatically called in the `idle_task` loop--use `depthfinder set debug true` to bypass the landed state thing and update on NMEA message receipt.
 - If things seem like they're breaking, use `depthfinder set verbose 1`.  
-- The default target system ID is 0. You may need to change this to receive GPS messages and update module lat/lon. Use `verbose` to see what sys ID you're receiving messages from.
+- The default target system ID is 1. You may need to change this to receive GPS messages and update module lat/lon. Use `verbose` to see what sys ID you're receiving messages from.
 
 Build & test procedure
 ----------------------
 1. Clone the repo. be on the right branch.
 2. Delete the previous build directory, `rm -r build`
-3. Rf you have a shell terminal, run `python3 setup.py build install --user`
-4. Run mavproxy from `build/scripts-3.11/mavproxy.py`. 
-    - When testing with FC hardware, be sure to specify the connection point with `--master` (see https://ardupilot.org/mavproxy/docs/getting_started/starting.html#master)
-    - If you're using python2 or some cringe, the mavproxy file might be at a different location: this is the case on raspberry pi, since the particular one I was using built to python 3.7 for some reason
-    - You may need to uninstall mavproxy or other dependencies from other locations. be sure to read the error messages carefully!
-5. If you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
-6. Load the depthfinder module via `module load depthfinder`
-7. Run `depthfinder status` or whatever is implemented to help debug.
+3. If you have a shell terminal, run `python3 setup.py build install --user` to make the new mavproxy script at `/build/scripts-3.7/mavproxy.py`. *This is what you will run to do hermes stuff*
+
+From here, there are some divergent steps:
+* If you want to make changes to the the systemd task that runs automatically on boot:
+    1. `sudo systemctl stop mavproxserv.service`
+    2. run `systemctl status`: if it returns "degraded" or something in red, run `sudo systemctl reset-failed`
+    3. check the startup script at `~/.mavinit.scr` and make any desired changes
+    4. edit the file at `/etc/systemd/system/mavproxserv.service`
+    5. `sudo systemctl start mavproxserv.service`
+    6. optionally restart the raspberry pi
+* If you want to just run mavproxy manually with the interactive shell:
+    1. `sudo systemctl stop mavproxserv.service`
+    2. run `systemctl status`: if it returns "degraded" or something in red, run `sudo systemctl reset-failed`
+    3. check the startup script at `~/.mavinit.scr` and make any desired changes
+    4. do `python3 /build/scripts-3.7/mavproxy --out=udpin:[PI IP]:14550`. you will have to manually set the PI IP youself since the cool systemd scripts won't execute
+    5. do mavproxy stuff! reference the docs for that :)
+
 
 Land & continue mission config
 ------------------------------

@@ -67,15 +67,16 @@ Mavproxy module usage notes
 
 Build & test procedure
 ----------------------
-1. clone the repo. be on the right branch. 
-2. if you have a shell terminal, run `python3 setup.py build install --user`
-3. run mavproxy from `build/scripts-3.11/mavproxy.py`. 
-    - when testing with FC hardware, be sure to specify the connection point with `--master` (see https://ardupilot.org/mavproxy/docs/getting_started/starting.html#master)
-    - if you're using python2 or some cringe, the mavproxy file might be at a different location: this is the case on raspberry pi, since the particular one I was using built to python 3.7 for some reason
-    - you may need to uninstall mavproxy or other dependencies from other locations. be sure to read the error messages carefully!
-4. if you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
-5. load the depthfinder module via `module load depthfinder`
-6. run `depthfinder status` or whatever is implemented to help debug.
+1. Clone the repo. be on the right branch.
+2. Delete the previous build directory, `rm -r build`
+3. Rf you have a shell terminal, run `python3 setup.py build install --user`
+4. Run mavproxy from `build/scripts-3.11/mavproxy.py`. 
+    - When testing with FC hardware, be sure to specify the connection point with `--master` (see https://ardupilot.org/mavproxy/docs/getting_started/starting.html#master)
+    - If you're using python2 or some cringe, the mavproxy file might be at a different location: this is the case on raspberry pi, since the particular one I was using built to python 3.7 for some reason
+    - You may need to uninstall mavproxy or other dependencies from other locations. be sure to read the error messages carefully!
+5. If you see "detected vehicle" and a bunch of info regarding the FC, good job! otherwise, go back and figure out where in 1-3 you messed up.
+6. Load the depthfinder module via `module load depthfinder`
+7. Run `depthfinder status` or whatever is implemented to help debug.
 
 Land & continue mission config
 ------------------------------

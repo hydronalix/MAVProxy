@@ -66,10 +66,20 @@ The content of the files should be evidently repeatable to add other networks or
 Mavproxy module usage notes
 ---------------------------
 - For a list of changeable parameters, call `depthfinder set`
-- Writes to a new file whenever you load the module, which happens on start up. Still need to check if it will write to the file while in land state.
-- NMEA does not get automatically called in the `idle_task` loop--use `depthfinder set debug true` to bypass the landed state thing and update on NMEA message receipt.
+- Creates a new file whenever you load the module, which happens on start up.
 - If things seem like they're breaking, use `depthfinder set verbose 1`.  
 - The default target system ID is 1. You may need to change this to receive GPS messages and update module lat/lon. Use `verbose` to see what sys ID you're receiving messages from.
+
+The logic for writing entries to the file is this:
+```python
+        if (self.landed == True) or (self.depthfinder_settings.debug == True):
+            self.nmea_packet()
+            self.write_status()
+        else:
+            return
+```
+
+If you're in a bind and the logic for only recording data in the landed state isn't working, you can do `depthfinder set debug 1` to just always get NMEA data and write file entries. You can either add that to `~/.mavinit.scr` and refresh the `systemd` task, or stop the `systemd` task and run mavproxy manually.
 
 Build & test procedure
 ----------------------
@@ -107,7 +117,7 @@ mission planning:
 * probably use another DO_AUX_FUNCTION to do whatever
 * takeoff, waypoint, land, repeat
 
-for more info see https://www.youtube.com/watch?v=BK3OsNJoF8A
+cool video: https://www.youtube.com/watch?v=BK3OsNJoF8A
   
 
 Random notes
@@ -125,12 +135,4 @@ Random notes
 
 Errors / unresolved bugs
 ------------------------
-
-Friggn thing crashes after a while if I'm not doing anything, it seems.
-```
-Exception in thread log_writer:
-Traceback (most recent call last):
-  File "/opt/homebrew/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1038, in _bootstrap_inner
-    self.run()
-  File "/opt/homebrew/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 975, in run
-```
+* `MISSION_CURRENT` does not contain extened mavlink2 data. that's not really an error with the code here (i think) but rather something that's just confusing to watch out for.

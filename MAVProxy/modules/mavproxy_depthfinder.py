@@ -94,10 +94,8 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-
-        #TODO: add mission active check
-        if (self.landed == True) or (self.depthfinder_settings.debug == True): 
-            self.nmea_packet()
+        self.nmea_packet()
+        if (self.landed == True & self.mission_active) or (self.depthfinder_settings.debug == True): 
             self.write_status()
         else:
             return
@@ -178,6 +176,11 @@ class depthfinder(mp_module.MPModule):
                 self.landed = True
             else:
                 self.landed = False
+        elif m.get_type() == 'HEARTBEAT':
+            if m.base_mode & 0b10001100:  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
+                self.mission_active = True
+            if (self.depthfinder_settings.verbose):
+                print(f"mission active: {self.mission_active}")
 
 def init(mpstate):
     '''initialise module'''

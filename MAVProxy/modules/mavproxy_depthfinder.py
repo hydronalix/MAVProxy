@@ -94,7 +94,9 @@ class depthfinder(mp_module.MPModule):
         
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
-        if (self.landed == True) or (self.depthfinder_settings.debug == True):
+
+        #TODO: add mission active check
+        if (self.landed == True) or (self.depthfinder_settings.debug == True): 
             self.nmea_packet()
             self.write_status()
         else:
@@ -103,7 +105,7 @@ class depthfinder(mp_module.MPModule):
     def write_status(self):
         try:
             self.file = open(self.logFile, "a")
-            self.file.write(f"{self.lat},{self.lon},{self.current_depth},{self.current_temp}\n")
+            self.file.write(f"{self.lat * 0.0000001},{self.lon * 0.0000001},{self.current_depth * (-1.0)},{self.current_temp}\n")
             self.file.close()
         except Exception as e:
             print(e)
@@ -143,9 +145,6 @@ class depthfinder(mp_module.MPModule):
                         self.current_temp = float(nmeaList[1])
                         if (self.depthfinder_settings.verbose) :
                             print("Temperature: "+nmeaList[1]+"C")
-
-        #TODO write to file here?
-
         return    
 
     def mavlink_packet(self, m):

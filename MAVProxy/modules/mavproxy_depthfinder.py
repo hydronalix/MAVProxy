@@ -24,33 +24,20 @@ class depthfinder(mp_module.MPModule):
     def __init__(self, mpstate):
         """Initialise module"""
         super(depthfinder, self).__init__(mpstate, "depthfinder", "")
-        self.status_callcount = 0
-        self.boredom_interval = 10 # seconds
-        self.last_bored = time.time()
         self.lat = 0
         self.lon = 0
         self.landed = False
         self.current_depth = 0.0
         self.current_temp = 0.0
-        self.depth_readings = []        #TODO: make this a circular buffer
-        self.temp_readings = []  
         self.num_readings = 10
         self.ser = serial.Serial()
         self.ser.baudrate = 4800
         self.ser.port = '/dev/ttyS0'
-        self.fileNum = 1
         self.home_dir = os.path.expanduser('~')
-        self.logFile = self.home_dir + "/file" +str(self.fileNum)+".csv"
         self.mission_active = False
-        
-
-        while os.path.isfile(self.logFile):
-            self.fileNum += 1
-            self.logFile = self.home_dir + "/file" +str(self.fileNum)+".csv"
-
-        self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
-        self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
-        self.file.close()
+        self.logFile =  ""
+        self.time = 0
+        self.initflag = False
 
         self.depthfinder_settings = mp_settings.MPSettings(
             [ ('verbose', bool, False),
@@ -63,6 +50,13 @@ class depthfinder(mp_module.MPModule):
     def usage(self):
         '''show help on command line options'''
         return "Usage: depthfinder <status|set|capture|write>"
+    
+    def create_logfile(self):
+        self.logFile = self.home_dir + "surveys/" + str(self.time) + ".csv"
+
+        self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
+        self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
+        self.file.close()
 
     def cmd_depthfinder(self, args):
         '''control behaviour of the module'''
@@ -95,9 +89,15 @@ class depthfinder(mp_module.MPModule):
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
         self.nmea_packet()
-        if (self.landed == True & self.mission_active) or (self.depthfinder_settings.debug == True): 
+        if (self.landed == True and self.mission_active == True) or (self.depthfinder_settings.debug == True): 
+            if self.initflag == False:
+                self.create_logfile()
+                self.initflag = True
             self.write_status()
         else:
+            if self.initflag == True:
+                self.initflag = False
+                self.logFile = ""
             return
 
     def write_status(self):
@@ -181,6 +181,8 @@ class depthfinder(mp_module.MPModule):
                 self.mission_active = True
             if (self.depthfinder_settings.verbose):
                 print(f"mission active: {self.mission_active}")
+        elif m.get_type() == 'SYSTEM_TIME':
+            self.time = m.time_unix_usec
 
 def init(mpstate):
     '''initialise module'''

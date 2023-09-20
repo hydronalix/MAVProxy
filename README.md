@@ -38,8 +38,8 @@ For debugging purposes this drone will work differently than other things: the d
 
 Network/IP setup
 * The drone will automatically connect to both Hydro_Eng or tidepool depending on which one is active. If in the office, only use Hydro_Eng to avoid confusion, or put the router right next to the drone and hope it connects to tidepool (it probably will)
-* On Hydro_Eng, the drone will be at 192.168.50.151
-* On tidepool, the drone will be at 10.1.0.123
+* On Hydro_Eng, the drone will be at **192.168.50.151**
+* On tidepool, the drone will be at **10.1.0.123**
 * To connect, your GS *device does not need at static ip*
 * In QGC, navigate to `Q > Application Settings > Comm Links`
 * Add a new connection (if you haven't yet) and name it like "hermes tidepool" or something
@@ -72,10 +72,16 @@ Mavproxy module usage notes
 
 The logic for writing entries to the file is this:
 ```python
-        if (self.landed == True) or (self.depthfinder_settings.debug == True):
-            self.nmea_packet()
+        self.nmea_packet()
+        if (self.landed == True and self.mission_active == True) or (self.depthfinder_settings.debug == True): 
+            if self.initflag == False:
+                self.create_logfile()
+                self.initflag = True
             self.write_status()
         else:
+            if self.initflag == True:
+                self.initflag = False
+                self.logFile = ""
             return
 ```
 
@@ -136,3 +142,8 @@ Random notes
 Errors / unresolved bugs
 ------------------------
 * `MISSION_CURRENT` does not contain extened mavlink2 data. that's not really an error with the code here (i think) but rather something that's just confusing to watch out for.
+
+
+Milestones
+----------
+18 September 2023: yay first successful flight & data collection!

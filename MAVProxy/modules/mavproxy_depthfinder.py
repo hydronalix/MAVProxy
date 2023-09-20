@@ -52,11 +52,15 @@ class depthfinder(mp_module.MPModule):
         return "Usage: depthfinder <status|set|capture|write>"
     
     def create_logfile(self):
-        self.logFile = self.home_dir + "surveys/" + str(self.time) + ".csv"
+        try:
+            self.logFile = self.home_dir + "/surveys/" + str(self.time) + ".csv"
 
-        self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
-        self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
-        self.file.close()
+            self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
+            self.file.write("Latitude,Longitude,Depth(m),Tempurature(C)\n")
+            self.file.close()
+            print("CREATED NEW SURVEY FILE AT: " + self.logFile)
+        except Exception as e:
+            print(e)
 
     def cmd_depthfinder(self, args):
         '''control behaviour of the module'''
@@ -177,12 +181,15 @@ class depthfinder(mp_module.MPModule):
             else:
                 self.landed = False
         elif m.get_type() == 'HEARTBEAT':
-            if m.base_mode & 0b10001100:  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
+            if (m.base_mode & 0b10000000) and (m.base_mode & 0b00001100) :  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
                 self.mission_active = True
             if (self.depthfinder_settings.verbose):
                 print(f"mission active: {self.mission_active}")
+                print(f"mission state is: {m.base_mode}")
         elif m.get_type() == 'SYSTEM_TIME':
             self.time = m.time_unix_usec
+            if (self.depthfinder_settings.verbose):
+                print(f"time is: {self.time}")
 
 def init(mpstate):
     '''initialise module'''

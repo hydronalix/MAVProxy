@@ -53,8 +53,8 @@ class depthfinder(mp_module.MPModule):
     
     def create_logfile(self):
         try:
-            epochstr = str(self.time / 1000000) #convert from microseconds to seconds
-            timestr = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(epochstr))
+            epoch = int(self.time) / 1000000 #convert from microseconds to seconds
+            timestr = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(epoch))
             self.logFile = self.home_dir + "/surveys/" + str(timestr) + ".csv"
 
             self.file = open(self.logFile, "w") #change to a if we want it to be able to be turned on and off again and write to same file
@@ -62,6 +62,7 @@ class depthfinder(mp_module.MPModule):
             self.file.close()
             print("CREATED NEW SURVEY FILE AT: " + self.logFile)
         except Exception as e:
+            print("Error creating file")
             print(e)
 
     def cmd_depthfinder(self, args):

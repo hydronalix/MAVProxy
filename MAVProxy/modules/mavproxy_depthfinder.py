@@ -184,7 +184,7 @@ class depthfinder(mp_module.MPModule):
             else:
                 self.landed = False
         elif m.get_type() == 'HEARTBEAT':
-            if (m.base_mode & 0b10000000) and (m.base_mode & 0b00001100) :  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
+            if (m.base_mode & 0b10000000) and (m.base_mode & 0b00000100) :  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
                 self.mission_active = True
             if (self.depthfinder_settings.verbose):
                 print(f"mission active: {self.mission_active}")

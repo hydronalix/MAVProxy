@@ -26,7 +26,6 @@ class depthfinder(mp_module.MPModule):
         super(depthfinder, self).__init__(mpstate, "depthfinder", "")
         self.lat = 0
         self.lon = 0
-        self.landed = False
         self.current_depth = 0.0
         self.current_temp = 0.0
         self.num_readings = 10
@@ -34,7 +33,9 @@ class depthfinder(mp_module.MPModule):
         self.ser.baudrate = 4800
         self.ser.port = '/dev/ttyS0'
         self.home_dir = os.path.expanduser('~')
-        self.mission_active = False
+        self.armed = False
+        self.landed = True
+        self.mission = False
         self.logFile =  ""
         self.time = 0
         self.initflag = False
@@ -96,15 +97,17 @@ class depthfinder(mp_module.MPModule):
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
         self.nmea_packet()
-        if (self.landed == True and self.mission_active == True) or (self.depthfinder_settings.debug == True): 
+        if (self.armed == 0) and (self.landed == 1) and (self.mission == 0):
+            self.initflag = False
+            self.logFile = ""
+            return
+        elif (self.armed == 1) and (self.landed == 0) and (self.mission == 1):
             if self.initflag == False:
                 self.create_logfile()
                 self.initflag = True
+            return
+        elif (self.armed == 1) and (self.landed == 1) and (self.mission == 1):
             self.write_status()
-        else:
-            if self.initflag == True:
-                self.initflag = False
-                self.logFile = ""
             return
 
     def write_status(self):
@@ -184,10 +187,11 @@ class depthfinder(mp_module.MPModule):
             else:
                 self.landed = False
         elif m.get_type() == 'HEARTBEAT':
-            if (m.base_mode & 0b10000000) and (m.base_mode & 0b00001100) :  # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
-                self.mission_active = True
+            self.mission = bool(m.base_mode & 0b00001100)       # see: https://mavlink.io/en/messages/common.html#MAV_MODE_FLAG
+            self.armed = bool(m.base_mode & 0b10000000)
+
             if (self.depthfinder_settings.verbose):
-                print(f"mission active: {self.mission_active}")
+                print(f"mission active: {self.mission}")
                 print(f"mission state is: {m.base_mode}")
         elif m.get_type() == 'SYSTEM_TIME':
             self.time = m.time_unix_usec

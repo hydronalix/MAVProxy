@@ -97,17 +97,18 @@ class depthfinder(mp_module.MPModule):
         i don't think there's really a particular "idle state", pretty sure this is just called every time through the main loop... or something
         '''
         self.nmea_packet()
-        if (self.armed == 0) and (self.landed == 1) and (self.mission == 0):
+        if (self.armed == 0) and (self.landed == 1) and (self.mission == 0): # state for when vehicle is disarmed and landed
             self.initflag = False
             self.logFile = ""
             return
-        elif (self.armed == 1) and (self.landed == 0) and (self.mission == 1):
+        elif (self.armed == 1) and (self.landed == 0) and (self.mission == 1): # state for when vehicle is in the air as part of a mission
             if self.initflag == False:
                 self.create_logfile()
                 self.initflag = True
             return
-        elif (self.armed == 1) and (self.landed == 1) and (self.mission == 1):
-            self.write_status()
+        elif (self.armed == 1) and (self.landed == 1) and (self.mission == 1): # state for when vehicle is landed as part of a mission
+            if self.initflag == True: # only write if log file has been created
+                self.write_status()
             return
 
     def write_status(self):

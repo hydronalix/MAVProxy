@@ -137,7 +137,14 @@ Random notes
     * the silvus radio module also just sorta defines it when needed to send a udp packet
 * wtf is the `MPState` object lol this is also a property of literally every module
     * holds all the MPSettings  
-    * 
+
+
+The gist of how stuff works right now:
+* depthfinder data is captured in `nmea_packet`
+* mavlink messages are handled in `mavlink_packet`. note that the 'EXTENDED_SYS_STATE' message is necessary for operation and is not enabled by default on the flight controller. necessary data is captured here for vehicle state
+* `idle_task` contains a sort of state machine that handles when survey files are created and written to. in short, a new file is created when a mission is started and written to when the drone lands but is still armed with a mission.
+* most other non-intuitive methods are stuff for the module to function. compare with the module `mavproxy_example.py` to see what's goin on ;-)
+
 
 Errors / unresolved bugs
 ------------------------

@@ -1257,7 +1257,7 @@ if __name__ == '__main__':
     parser.add_option("--target-component", dest='TARGET_COMPONENT', type='int',
                       default=0, help='MAVLink target master component')
     # added time
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    timestamp = time.strftime("%Y-%m-%d-%H:%M.%S")
     default_logfile = f"mav_{timestamp}.tlog"
     parser.add_option("--logfile", dest="logfile", help="MAVLink master logfile",
                       default=default_logfile)

@@ -1256,8 +1256,11 @@ if __name__ == '__main__':
                       default=0, help='MAVLink target master system')
     parser.add_option("--target-component", dest='TARGET_COMPONENT', type='int',
                       default=0, help='MAVLink target master component')
+    # added time
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    default_logfile = f"mav_{timestamp}.tlog"
     parser.add_option("--logfile", dest="logfile", help="MAVLink master logfile",
-                      default='mav.tlog')
+                      default=default_logfile)
     parser.add_option("-a", "--append-log", dest="append_log", help="Append to log files",
                       action='store_true', default=False)
     parser.add_option("--quadcopter", dest="quadcopter", help="use quadcopter controls",

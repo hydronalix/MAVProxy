@@ -902,7 +902,7 @@ def log_writer():
 
 # If state_basedir is NOT set then paths for logs and aircraft
 # directories are relative to mavproxy's cwd
-def log_paths():
+def log_paths(mpstate): #start here gabe, get time messgaes
     '''Returns tuple (logdir, telemetry_log_filepath, raw_telemetry_log_filepath)'''
     if opts.aircraft is not None:
         dirname = ""
@@ -1322,7 +1322,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # global mavproxy state
-    mpstate = MPState()
+    mpstate = MPState() # get messages here GABE start here gabe, get messages from mpstate.mpstatus.messages(look for time one in depthfinder ex
     mpstate.status.exit = False
     mpstate.command_map = command_map
     mpstate.continue_mode = opts.continue_mode
@@ -1433,7 +1433,7 @@ if __name__ == '__main__':
         mpstate.rl.set_prompt("")
 
     # call this early so that logdir is setup based on --aircraft
-    (mpstate.status.logdir, logpath_telem, logpath_telem_raw) = log_paths()
+    (mpstate.status.logdir, logpath_telem, logpath_telem_raw) = log_paths(mpstate)
 
     for module in opts.load_module:
         modlist = module.split(',')

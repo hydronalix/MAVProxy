@@ -109,6 +109,14 @@ class MPStatus(object):
         self.armed = False
         self.last_bytecounter_calc = 0
 
+    def get_start_time(self):
+        start_time = "NO_TIME_FOUND"
+        for m in self.msgs:
+            if m.get_type() == 'SYSTEM_TIME':
+                start_time = m.time_unix_usec
+        return start_time
+
+
     class ByteCounter(object):
         def __init__(self):
             self.total_count = 0
@@ -902,8 +910,9 @@ def log_writer():
 
 # If state_basedir is NOT set then paths for logs and aircraft
 # directories are relative to mavproxy's cwd
-def log_paths(mpstate): #start here gabe, get time messgaes
+def log_paths():
     '''Returns tuple (logdir, telemetry_log_filepath, raw_telemetry_log_filepath)'''
+    # todo: add time to flight file later
     if opts.aircraft is not None:
         dirname = ""
         if opts.mission is not None:
@@ -929,7 +938,7 @@ def log_paths(mpstate): #start here gabe, get time messgaes
         logname = 'flight.tlog'
         logdir = fdir
     else:
-        logname = os.path.basename(opts.logfile)
+        logname = os.path.basename(opts.logfile) + '_' + str(mpstate.status.get_start_time())
         dir_path = os.path.dirname(opts.logfile)
         if not os.path.isabs(dir_path) and mpstate.settings.state_basedir is not None:
             dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
@@ -1433,7 +1442,7 @@ if __name__ == '__main__':
         mpstate.rl.set_prompt("")
 
     # call this early so that logdir is setup based on --aircraft
-    (mpstate.status.logdir, logpath_telem, logpath_telem_raw) = log_paths(mpstate)
+    (mpstate.status.logdir, logpath_telem, logpath_telem_raw) = log_paths()
 
     for module in opts.load_module:
         modlist = module.split(',')

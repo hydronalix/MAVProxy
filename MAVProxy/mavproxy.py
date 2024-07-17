@@ -73,6 +73,7 @@ if __name__ == '__main__':
 #The MAVLink version being used (None, "1.0", "2.0")
 mavversion = None
 mpstate = None
+renaming_file = False
 
 class MPStatus(object):
     '''hold status information about the mavproxy'''
@@ -108,14 +109,6 @@ class MPStatus(object):
         self.last_seq = 0
         self.armed = False
         self.last_bytecounter_calc = 0
-
-    def get_start_time(self):
-        start_time = "NO_TIME_FOUND"
-        for m in self.msgs:
-            if m.get_type() == 'SYSTEM_TIME':
-                start_time = m.time_unix_usec
-        return start_time
-
 
     class ByteCounter(object):
         def __init__(self):
@@ -790,6 +783,70 @@ def process_stdin(line):
         if mpstate.settings.moddebug > 1:
             traceback.print_exc()
 
+def rename_log_file(time):
+    global renaming_file 
+    renaming_file = True
+    
+    #set mode
+    if opts.append_log or opts.continue_mode:
+        mode = 'ab'
+    else:
+        mode = 'wb'
+
+    try:
+        #make new name
+        new_logname = os.path.basename(opts.logfile) + "_" + str(time)
+        dir_path = os.path.dirname(opts.logfile)
+        if not os.path.isabs(dir_path) and mpstate.settings.state_basedir is not None:
+            dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
+
+        logdir = dir_path
+
+        #new log path
+        new_logpath_telem = os.path.join(logdir, new_logname),
+        new_logpath_telem_raw = os.path.join(logdir, new_logname + '.raw')
+        #open new files
+        new_file = open(new_logpath_telem, mode=mode)
+        new_raw_file = open(new_logpath_telem_raw, mode=mode)
+
+        #write everythin over
+        if mpstate.logfile:
+            mpstate.logfile.seek(0)
+            for line in mpstate.logfile:
+                new_file.write(line)
+
+        if mpstate.logfile_raw:
+            mpstate.logfile_raw.seek(0)
+            for line in mpstate.logfile_raw:
+                new_raw_file.write(line)
+
+        #delete old file
+        if os.path.exists(mpstate.logfile):
+            os.remove(mpstate.logfile)
+        if os.path.exists(mpstate.logfile_raw):
+            os.remove(mpstate.logfile_raw)
+
+        mpstate.logfile = new_file
+        mpstate.logfile_raw = new_raw_file
+        print("Log Directory: %s" % mpstate.status.logdir)
+        print("renammed Telemetry log: %s" % new_logpath_telem)
+
+        #make sure there's enough free disk space for the logfile (>200Mb)
+        #statvfs doesn't work in Windows
+        if platform.system() != 'Windows':
+            stat = os.statvfs(new_logpath_telem)
+            if stat.f_bfree*stat.f_bsize < 209715200:
+                print("ERROR: Not enough free disk space for logfile")
+                mpstate.status.exit = True
+                return
+    except Exception as e:
+        print("ERROR: renaming log file for writing: %s" % e)
+        mpstate.status.exit = True
+        return
+
+    renaming_file = False # release lock
+    return
+
 
 def process_master(m):
     '''process packets from the MAVLink master'''
@@ -835,10 +892,15 @@ def process_master(m):
                   continue
             if getattr(m, '_timestamp', None) is None:
                 m.post_message(msg)
+                print("Time stamp")
             if msg.get_type() == "BAD_DATA":
                 if opts.show_errors:
                     mpstate.console.writeln("MAV error: %s" % msg)
                 mpstate.status.mav_error += 1
+            if msg.get_type() == "SYSTEM_TIME":
+                #remake file with 
+                print("system time")
+                rename_log_file(m.time_unix_usec)
 
 
 
@@ -897,7 +959,9 @@ def mkdir_p(dir):
 
 def log_writer():
     '''log writing thread'''
+    global renaming_file
     while True:
+        if renaming_file: continue
         mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
         timeout = time.time() + 10
         while not mpstate.logqueue_raw.empty() and time.time() < timeout:
@@ -912,7 +976,6 @@ def log_writer():
 # directories are relative to mavproxy's cwd
 def log_paths():
     '''Returns tuple (logdir, telemetry_log_filepath, raw_telemetry_log_filepath)'''
-    # todo: add time to flight file later
     if opts.aircraft is not None:
         dirname = ""
         if opts.mission is not None:
@@ -938,7 +1001,7 @@ def log_paths():
         logname = 'flight.tlog'
         logdir = fdir
     else:
-        logname = os.path.basename(opts.logfile) + '_' + str(mpstate.status.get_start_time())
+        logname = os.path.basename(opts.logfile)
         dir_path = os.path.dirname(opts.logfile)
         if not os.path.isabs(dir_path) and mpstate.settings.state_basedir is not None:
             dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
@@ -1331,7 +1394,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # global mavproxy state
-    mpstate = MPState() # get messages here GABE start here gabe, get messages from mpstate.mpstatus.messages(look for time one in depthfinder ex
+    mpstate = MPState()
     mpstate.status.exit = False
     mpstate.command_map = command_map
     mpstate.continue_mode = opts.continue_mode

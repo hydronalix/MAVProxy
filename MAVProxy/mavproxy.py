@@ -42,7 +42,6 @@ from MAVProxy.modules.lib import dumpstacks
 from MAVProxy.modules.lib import mp_substitute
 from MAVProxy.modules.lib import multiproc
 from MAVProxy.modules.mavproxy_link import preferred_ports
-
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
 try:
@@ -74,6 +73,7 @@ if __name__ == '__main__':
 mavversion = None
 mpstate = None
 renaming_file = False
+renamed = False
 
 class MPStatus(object):
     '''hold status information about the mavproxy'''
@@ -786,7 +786,8 @@ def process_stdin(line):
 def rename_log_file(time):
     global renaming_file 
     renaming_file = True
-    
+    global renammed
+    renamed = True
     #set mode
     if opts.append_log or opts.continue_mode:
         mode = 'ab'
@@ -886,21 +887,23 @@ def process_master(m):
     msgs = m.mav.parse_buffer(s)
     if msgs:
         for msg in msgs:
+            if msg.get_type() == "SYSTEM_TIME" and not renamed:
+                #remake file with 
+                print("system time got")
+                rename_log_file(m.time_unix_usec)
             sysid = msg.get_srcSystem()
             if sysid in mpstate.sysid_outputs:
                   # the message has been handled by a specialised handler for this system
                   continue
             if getattr(m, '_timestamp', None) is None:
                 m.post_message(msg)
-                print("Time stamp")
+                print("Time stamp got")
+                print(m)
             if msg.get_type() == "BAD_DATA":
                 if opts.show_errors:
                     mpstate.console.writeln("MAV error: %s" % msg)
                 mpstate.status.mav_error += 1
-            if msg.get_type() == "SYSTEM_TIME":
-                #remake file with 
-                print("system time")
-                rename_log_file(m.time_unix_usec)
+            
 
 
 

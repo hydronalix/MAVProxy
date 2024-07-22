@@ -118,9 +118,7 @@ configuring the vehicle:
 
 mission planning:
 * first portion is ez: takeoff, waypoint(s), land
-* for the next item, use a "DO_AUX_FUNCTION" to disarm/ar or do other spicy behavior. this may be useful for the triggering the depth finder
 * add a "Delay until" item and specify like 5-15 seconds maybe. *do not use the regular delay command or specify MAV_CMD_NAV_DELAY in "Show all values"*
-* probably use another DO_AUX_FUNCTION to do whatever
 * takeoff, waypoint, land, repeat
 
 cool video: https://www.youtube.com/watch?v=BK3OsNJoF8A
@@ -135,8 +133,7 @@ Random notes
 * it looks like if a module needs a socket, it just imports it and there's no single socket handler:
     * `mavpxory_DGPS` attempts to receive in idle time. there's also this `gps_rtcm_data_send` method that's called in several places but doesn't appear to be defined anywhere.
     * the silvus radio module also just sorta defines it when needed to send a udp packet
-* wtf is the `MPState` object lol this is also a property of literally every module
-    * holds all the MPSettings  
+* the `MPState` object holds all the MPSettings  
 
 
 The gist of how stuff works right now:

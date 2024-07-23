@@ -796,7 +796,9 @@ def rename_log_file(time):
 
     try:
         #make new name
-        new_logname = os.path.basename(opts.logfile) + "_" + str(time)
+        epoch = int(time) / 1000000 #convert from microseconds to seconds
+        timestr = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(epoch))
+        new_logname = os.path.basename(opts.logfile) + "_" + str(timestr)
         dir_path = os.path.dirname(opts.logfile)
         if not os.path.isabs(dir_path) and mpstate.settings.state_basedir is not None:
             dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
@@ -804,22 +806,20 @@ def rename_log_file(time):
         logdir = dir_path
 
         #new log path
-        new_logpath_telem = os.path.join(logdir, new_logname),
+        new_logpath_telem = os.path.join(logdir, new_logname)
         new_logpath_telem_raw = os.path.join(logdir, new_logname + '.raw')
+        
+        #close old file
+        mpstate.logfile.close()
+        mpstate.logfile_raw.close()
+
+        #write everythin over
+        os.system("cp " + mpstate.logfile.name + " " +  new_logpath_telem)
+        os.system("cp " + mpstate.logfile_raw.name + " " +  new_logpath_telem_raw)
+
         #open new files
         new_file = open(new_logpath_telem, mode=mode)
         new_raw_file = open(new_logpath_telem_raw, mode=mode)
-
-        #write everythin over
-        if mpstate.logfile:
-            mpstate.logfile.seek(0)
-            for line in mpstate.logfile:
-                new_file.write(line)
-
-        if mpstate.logfile_raw:
-            mpstate.logfile_raw.seek(0)
-            for line in mpstate.logfile_raw:
-                new_raw_file.write(line)
 
         #delete old file
         if os.path.exists(mpstate.logfile):
@@ -882,15 +882,17 @@ def process_master(m):
         return
     
     global mavversion
+    global renamed
     if m.first_byte and mavversion is None:
         m.auto_mavlink_version(s)
     msgs = m.mav.parse_buffer(s)
     if msgs:
         for msg in msgs:
-            if msg.get_type() == "SYSTEM_TIME" and not renamed:
+            if msg.get_type() == "SYSTEM_TIME" and (not renamed):
                 #remake file with 
                 print("system time got")
-                rename_log_file(m.time_unix_usec)
+                print(msg)
+                rename_log_file(msg.time_unix_usec)
             sysid = msg.get_srcSystem()
             if sysid in mpstate.sysid_outputs:
                   # the message has been handled by a specialised handler for this system
@@ -898,7 +900,7 @@ def process_master(m):
             if getattr(m, '_timestamp', None) is None:
                 m.post_message(msg)
                 print("Time stamp got")
-                print(m)
+                print(msg)
             if msg.get_type() == "BAD_DATA":
                 if opts.show_errors:
                     mpstate.console.writeln("MAV error: %s" % msg)
@@ -1066,10 +1068,14 @@ def set_stream_rates():
             rate = mpstate.settings.streamrate2
         if rate != -1 and mpstate.settings.streamrate != -1:
             # Send to all detected vehicles in this link
-            for (sysid, compid) in mpstate.vehicle_link_map[master.linknum]:
-                master.mav.request_data_stream_send(sysid, compid,
-                                                    mavutil.mavlink.MAV_DATA_STREAM_ALL,
-                                                    rate, 1)
+            #for (sysid, compid) in mpstate.vehicle_link_map[master.linknum]:
+                #master.mav.request_data_stream_send(sysid, compid,
+                                                    #mavutil.mavlink.MAV_DATA_STREAM_ALL,
+                                                    #rate, 1)
+            master.mav.request_data_stream_send(mpstate.settings.target_system, mpstate.settings.target_component,
+                                                mavutil.mavlink.MAV_DATA_STREAM_ALL,
+                                                rate, 1)
+
 
 def check_link_status():
     '''check status of master links'''

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 '''
 mavproxy - a MAVLink proxy program
 
@@ -783,10 +783,10 @@ def process_stdin(line):
         if mpstate.settings.moddebug > 1:
             traceback.print_exc()
 
-def rename_log_file(time):
+def rename_log_file(msg_time):
     global renaming_file 
     renaming_file = True
-    global renammed
+    global renamed
     renamed = True
     #set mode
     if opts.append_log or opts.continue_mode:
@@ -796,36 +796,41 @@ def rename_log_file(time):
 
     try:
         #make new name
-        epoch = int(time) / 1000000 #convert from microseconds to seconds
-        timestr = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(epoch))
-        new_logname = os.path.basename(opts.logfile) + "_" + str(timestr)
+        print("getting new name-")
+        epoch = int(msg_time) / 1000000 #convert from microseconds to seconds
+        timestr = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime(epoch))
+        new_logname = os.path.basename(opts.logfile) + "_" + timestr
         dir_path = os.path.dirname(opts.logfile)
         if not os.path.isabs(dir_path) and mpstate.settings.state_basedir is not None:
             dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
 
         logdir = dir_path
+        print("new log path joining--")
 
         #new log path
         new_logpath_telem = os.path.join(logdir, new_logname)
         new_logpath_telem_raw = os.path.join(logdir, new_logname + '.raw')
-        
-        #close old file
+        print("opening new files---")
+
+        # get old name
+        old_name = mpstate.logfile.name
+        old_name_raw = mpstate.logfile_raw.name
+
+        #close old 
         mpstate.logfile.close()
         mpstate.logfile_raw.close()
 
         #write everythin over
-        os.system("cp " + mpstate.logfile.name + " " +  new_logpath_telem)
-        os.system("cp " + mpstate.logfile_raw.name + " " +  new_logpath_telem_raw)
+        os.system("cp " + old_name + " " +  new_logpath_telem)
+        os.system("cp " + old_name_raw + " " +  new_logpath_telem_raw)
 
         #open new files
         new_file = open(new_logpath_telem, mode=mode)
         new_raw_file = open(new_logpath_telem_raw, mode=mode)
 
         #delete old file
-        if os.path.exists(mpstate.logfile):
-            os.remove(mpstate.logfile)
-        if os.path.exists(mpstate.logfile_raw):
-            os.remove(mpstate.logfile_raw)
+        os.remove(old_name)
+        os.remove(old_name_raw)
 
         mpstate.logfile = new_file
         mpstate.logfile_raw = new_raw_file
@@ -888,7 +893,7 @@ def process_master(m):
     msgs = m.mav.parse_buffer(s)
     if msgs:
         for msg in msgs:
-            if msg.get_type() == "SYSTEM_TIME" and (not renamed):
+            if msg.get_type() == "SYSTEM_TIME" and not renamed:
                 #remake file with 
                 print("system time got")
                 print(msg)
@@ -964,9 +969,11 @@ def mkdir_p(dir):
 
 def log_writer():
     '''log writing thread'''
-    global renaming_file
     while True:
-        if renaming_file: continue
+        global renaming_file
+        if renaming_file:
+            print("RENAMING IN THREAD")
+            continue
         mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
         timeout = time.time() + 10
         while not mpstate.logqueue_raw.empty() and time.time() < timeout:

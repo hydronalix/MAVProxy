@@ -72,7 +72,7 @@ if __name__ == '__main__':
 #The MAVLink version being used (None, "1.0", "2.0")
 mavversion = None
 mpstate = None
-renaming_file = False
+renaming_lock = threading.Lock()
 renamed = False
 
 class MPStatus(object):
@@ -784,8 +784,6 @@ def process_stdin(line):
             traceback.print_exc()
 
 def rename_log_file(msg_time):
-    global renaming_file 
-    renaming_file = True
     global renamed
     renamed = True
     #set mode
@@ -796,7 +794,7 @@ def rename_log_file(msg_time):
 
     try:
         #make new name
-        print("getting new name-")
+        print("DEBUG: getting new name-")
         epoch = int(msg_time) / 1000000 #convert from microseconds to seconds
         timestr = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime(epoch))
         new_logname = os.path.basename(opts.logfile) + "_" + timestr
@@ -805,37 +803,39 @@ def rename_log_file(msg_time):
             dir_path = os.path.join(mpstate.settings.state_basedir,dir_path)
 
         logdir = dir_path
-        print("new log path joining--")
+        print("DEBUG: new log path joining--")
 
         #new log path
         new_logpath_telem = os.path.join(logdir, new_logname)
         new_logpath_telem_raw = os.path.join(logdir, new_logname + '.raw')
-        print("opening new files---")
+        print("DEBUG: opening new files---")
 
         # get old name
         old_name = mpstate.logfile.name
         old_name_raw = mpstate.logfile_raw.name
 
-        #close old 
-        mpstate.logfile.close()
-        mpstate.logfile_raw.close()
+        # close old, lock thread
+        with renaming_lock:
+            print("DEBUG: lock acquired")
+            mpstate.logfile.close()
+            mpstate.logfile_raw.close()
 
-        #write everythin over
-        os.system("cp " + old_name + " " +  new_logpath_telem)
-        os.system("cp " + old_name_raw + " " +  new_logpath_telem_raw)
+            #write everythin over
+            os.system("cp " + old_name + " " +  new_logpath_telem)
+            os.system("cp " + old_name_raw + " " +  new_logpath_telem_raw)
 
-        #open new files
-        new_file = open(new_logpath_telem, mode=mode)
-        new_raw_file = open(new_logpath_telem_raw, mode=mode)
+            #open new files
+            new_file = open(new_logpath_telem, mode=mode)
+            new_raw_file = open(new_logpath_telem_raw, mode=mode)
 
-        #delete old file
-        os.remove(old_name)
-        os.remove(old_name_raw)
+            #delete old file
+            os.remove(old_name)
+            os.remove(old_name_raw)
 
-        mpstate.logfile = new_file
-        mpstate.logfile_raw = new_raw_file
-        print("Log Directory: %s" % mpstate.status.logdir)
-        print("renammed Telemetry log: %s" % new_logpath_telem)
+            mpstate.logfile = new_file
+            mpstate.logfile_raw = new_raw_file
+            print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
+            print("DEBUG: renamed Telemetry log: %s" % new_logpath_telem)
 
         #make sure there's enough free disk space for the logfile (>200Mb)
         #statvfs doesn't work in Windows
@@ -850,7 +850,6 @@ def rename_log_file(msg_time):
         mpstate.status.exit = True
         return
 
-    renaming_file = False # release lock
     return
 
 
@@ -895,7 +894,7 @@ def process_master(m):
         for msg in msgs:
             if msg.get_type() == "SYSTEM_TIME" and not renamed:
                 #remake file with 
-                print("system time got")
+                print("DEBUG: system time got")
                 print(msg)
                 rename_log_file(msg.time_unix_usec)
             sysid = msg.get_srcSystem()
@@ -904,7 +903,7 @@ def process_master(m):
                   continue
             if getattr(m, '_timestamp', None) is None:
                 m.post_message(msg)
-                print("Time stamp got")
+                print("DEBUG: Time stamp got")
                 print(msg)
             if msg.get_type() == "BAD_DATA":
                 if opts.show_errors:
@@ -970,10 +969,10 @@ def mkdir_p(dir):
 def log_writer():
     '''log writing thread'''
     while True:
-        global renaming_file
-        if renaming_file:
-            print("RENAMING IN THREAD")
-            continue
+        # global renaming_file
+        # if renaming_file:
+        #     print("RENAMING IN THREAD")
+        #     continue
         mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
         timeout = time.time() + 10
         while not mpstate.logqueue_raw.empty() and time.time() < timeout:
@@ -1008,7 +1007,7 @@ def log_paths():
         if mpstate.continue_mode and highest is not None:
             fdir = highest
         elif os.path.exists(fdir):
-            print("Flight logs full")
+            print("DEBUG: Flight logs full")
             sys.exit(1)
         logname = 'flight.tlog'
         logdir = fdir
@@ -1036,8 +1035,8 @@ def open_telemetry_logs(logpath_telem, logpath_telem_raw):
     try:
         mpstate.logfile = open(logpath_telem, mode=mode)
         mpstate.logfile_raw = open(logpath_telem_raw, mode=mode)
-        print("Log Directory: %s" % mpstate.status.logdir)
-        print("Telemetry log: %s" % logpath_telem)
+        print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
+        print("DEBUG: Telemetry log: %s" % logpath_telem)
 
         #make sure there's enough free disk space for the logfile (>200Mb)
         #statvfs doesn't work in Windows
@@ -1626,7 +1625,7 @@ if __name__ == '__main__':
     #this loop executes after leaving the above loop and is for cleanup on exit
     for (m,pm) in mpstate.modules:
         if hasattr(m, 'unload'):
-            print("Unloading module %s" % m.name)
+            print("DEBUG: Unloading module %s" % m.name)
             m.unload()
 
     sys.exit(1)

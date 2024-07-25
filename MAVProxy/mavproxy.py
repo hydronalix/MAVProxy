@@ -819,28 +819,28 @@ def rename_log_file(msg_time):
         # close old, lock thread
         global pause_event
         pause_event.clear()
-        with renaming_lock:
-            print("DEBUG: lock acquired")
-            mpstate.logfile.close()
-            mpstate.logfile_raw.close()
+        #with renaming_lock:
+        print("DEBUG: lock acquired")
+        mpstate.logfile.close()
+        mpstate.logfile_raw.close()
 
-            #write everythin over
-            os.system("cp " + old_name + " " +  new_logpath_telem)
-            os.system("cp " + old_name_raw + " " +  new_logpath_telem_raw)
+        #write everythin over
+        os.system("cp " + old_name + " " +  new_logpath_telem)
+        os.system("cp " + old_name_raw + " " +  new_logpath_telem_raw)
 
-            #open new files
-            new_file = open(new_logpath_telem, mode=mode)
-            new_raw_file = open(new_logpath_telem_raw, mode=mode)
+        #open new files
+        new_file = open(new_logpath_telem, mode=mode)
+        new_raw_file = open(new_logpath_telem_raw, mode=mode)
 
-            #delete old file
-            os.remove(old_name)
-            os.remove(old_name_raw)
+        #delete old file
+        os.remove(old_name)
+        os.remove(old_name_raw)
 
-            mpstate.logfile = new_file
-            mpstate.logfile_raw = new_raw_file
-            print("DEBUG: ID OF NEW OPEND LOG FILE: "+ str(id(mpstate.logfile)))
-            print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
-            print("DEBUG: renamed Telemetry log: %s" % new_logpath_telem)
+        mpstate.logfile = new_file
+        mpstate.logfile_raw = new_raw_file
+        print("DEBUG: ID OF NEW OPEND LOG FILE: "+ str(id(mpstate.logfile)))
+        print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
+        print("DEBUG: renamed Telemetry log: %s" % new_logpath_telem)
         pause_event.set()
         
         #make sure there's enough free disk space for the logfile (>200Mb)
@@ -977,23 +977,23 @@ def log_writer():
     global pause_event
     while True:
         pause_event.wait()
-        with renaming_lock:
-            global mpstate
-            # if renaming_file:
-            print()
-            print("DEBUG: ID OF LOGFILE: "+ str(id(mpstate.logfile_raw)))
-            print()
-            #     continue
-            mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
-            timeout = time.time() + 10
-            while not mpstate.logqueue_raw.empty() and time.time() < timeout:
-                mpstate.logfile_raw.write(mpstate.logqueue_raw.get())
-            while not mpstate.logqueue.empty() and time.time() < timeout:
-                mpstate.logfile.write(mpstate.logqueue.get())
-            if mpstate.settings.flushlogs or time.time() >= timeout:
-                mpstate.logfile.flush()
-                mpstate.logfile_raw.flush()
-        time.sleep(1.1)    
+        #with renaming_lock:
+        global mpstate
+        # if renaming_file:
+        print()
+        print("DEBUG: ID OF LOGFILE: "+ str(id(mpstate.logfile)))
+        print()
+        #     continue
+        mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
+        timeout = time.time() + 10
+        while not mpstate.logqueue_raw.empty() and time.time() < timeout:
+            mpstate.logfile_raw.write(mpstate.logqueue_raw.get())
+        while not mpstate.logqueue.empty() and time.time() < timeout:
+            mpstate.logfile.write(mpstate.logqueue.get())
+        if mpstate.settings.flushlogs or time.time() >= timeout:
+            mpstate.logfile.flush()
+            mpstate.logfile_raw.flush()
+        #time.sleep(1.1)    
 
 # If state_basedir is NOT set then paths for logs and aircraft
 # directories are relative to mavproxy's cwd
@@ -1039,6 +1039,7 @@ def log_paths():
 
 def open_telemetry_logs(logpath_telem, logpath_telem_raw):
     '''open log files'''
+    global pause_event
     if opts.append_log or opts.continue_mode:
         mode = 'ab'
     else:
@@ -1062,6 +1063,7 @@ def open_telemetry_logs(logpath_telem, logpath_telem_raw):
         # use a separate thread for writing to the logfile to prevent
         # delays during disk writes (important as delays can be long if camera
         # app is running)
+        pause_event.set()
         t = threading.Thread(target=log_writer, name='log_writer')
         t.daemon = True
         t.start()

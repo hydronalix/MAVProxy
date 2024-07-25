@@ -1,9 +1,9 @@
 import threading
-import os, sys, time
+import os, time
 
 lock = threading.Lock()
 count = 0
-testfile = open('cringer.txt', 'w')
+testfile = open('pre.txt', 'w')
 
 def writeThread():
     global count
@@ -14,8 +14,8 @@ def writeThread():
             testfile.write(str(count))
             count += 1
             print(f"count is {count} writing to {hex(id(testfile))}")
-            time.sleep(.1)
             testfile.flush()
+        time.sleep(.1)
 
 def renamer():
     global testfile
@@ -27,11 +27,11 @@ def renamer():
                 print(f"renaming file at {hex(id(testfile))}")
                 testfile.close()
                 curdir = os.getcwd()
-                oldfilepath = curdir + '/cringer.txt'
-                newfilepath = curdir + '/cringiest.txt'
+                oldfilepath = curdir + '/pre.txt'
+                newfilepath = curdir + '/post.txt'
                 print(f'old: {oldfilepath} new: {newfilepath}')
                 os.system("cp " + oldfilepath + " " + newfilepath)
-                #os.system("rm " + oldfilepath)
+                os.system("rm " + oldfilepath)
                 testfile = open(newfilepath, 'a')
                 print(f'done, new file at {hex(id(testfile))}')
         time.sleep(.1)

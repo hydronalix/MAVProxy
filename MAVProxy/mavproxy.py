@@ -785,6 +785,7 @@ def process_stdin(line):
 
 def rename_log_file(msg_time):
     global renamed
+    global mpstate
     renamed = True
     #set mode
     if opts.append_log or opts.continue_mode:
@@ -834,6 +835,7 @@ def rename_log_file(msg_time):
 
             mpstate.logfile = new_file
             mpstate.logfile_raw = new_raw_file
+            print("DEBUG: ID OF NEW OPEND LOG FILE: "+ str(id(mpstate.logfile)))
             print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
             print("DEBUG: renamed Telemetry log: %s" % new_logpath_telem)
 
@@ -895,7 +897,7 @@ def process_master(m):
             if msg.get_type() == "SYSTEM_TIME" and not renamed:
                 #remake file with 
                 print("DEBUG: system time got")
-                print(msg)
+                #print(msg)
                 rename_log_file(msg.time_unix_usec)
             sysid = msg.get_srcSystem()
             if sysid in mpstate.sysid_outputs:
@@ -903,8 +905,8 @@ def process_master(m):
                   continue
             if getattr(m, '_timestamp', None) is None:
                 m.post_message(msg)
-                print("DEBUG: Time stamp got")
-                print(msg)
+                #print("DEBUG: Time stamp got")
+                #print(msg)
             if msg.get_type() == "BAD_DATA":
                 if opts.show_errors:
                     mpstate.console.writeln("MAV error: %s" % msg)
@@ -969,19 +971,23 @@ def mkdir_p(dir):
 def log_writer():
     '''log writing thread'''
     while True:
-        # global renaming_file
-        # if renaming_file:
-        #     print("RENAMING IN THREAD")
-        #     continue
-        mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
-        timeout = time.time() + 10
-        while not mpstate.logqueue_raw.empty() and time.time() < timeout:
-            mpstate.logfile_raw.write(mpstate.logqueue_raw.get())
-        while not mpstate.logqueue.empty() and time.time() < timeout:
-            mpstate.logfile.write(mpstate.logqueue.get())
-        if mpstate.settings.flushlogs or time.time() >= timeout:
-            mpstate.logfile.flush()
-            mpstate.logfile_raw.flush()
+        with renaming_lock:
+            global mpstate
+            # if renaming_file:
+            print()
+            print("DEBUG: ID OF LOGFILE: "+ str(id(mpstate.logfile_raw)))
+            print()
+            #     continue
+            mpstate.logfile_raw.write(bytearray(mpstate.logqueue_raw.get()))
+            timeout = time.time() + 10
+            while not mpstate.logqueue_raw.empty() and time.time() < timeout:
+                mpstate.logfile_raw.write(mpstate.logqueue_raw.get())
+            while not mpstate.logqueue.empty() and time.time() < timeout:
+                mpstate.logfile.write(mpstate.logqueue.get())
+            if mpstate.settings.flushlogs or time.time() >= timeout:
+                mpstate.logfile.flush()
+                mpstate.logfile_raw.flush()
+        time.sleep(1.1)    
 
 # If state_basedir is NOT set then paths for logs and aircraft
 # directories are relative to mavproxy's cwd

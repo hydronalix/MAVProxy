@@ -74,6 +74,7 @@ mavversion = None
 mpstate = None
 renaming_lock = threading.Lock()
 renamed = False
+pause_event = threading.Event()
 
 class MPStatus(object):
     '''hold status information about the mavproxy'''
@@ -816,6 +817,8 @@ def rename_log_file(msg_time):
         old_name_raw = mpstate.logfile_raw.name
 
         # close old, lock thread
+        global pause_event
+        pause_event.clear()
         with renaming_lock:
             print("DEBUG: lock acquired")
             mpstate.logfile.close()
@@ -838,7 +841,8 @@ def rename_log_file(msg_time):
             print("DEBUG: ID OF NEW OPEND LOG FILE: "+ str(id(mpstate.logfile)))
             print("DEBUG: Log Directory: %s" % mpstate.status.logdir)
             print("DEBUG: renamed Telemetry log: %s" % new_logpath_telem)
-
+        pause_event.set()
+        
         #make sure there's enough free disk space for the logfile (>200Mb)
         #statvfs doesn't work in Windows
         if platform.system() != 'Windows':
@@ -970,7 +974,9 @@ def mkdir_p(dir):
 
 def log_writer():
     '''log writing thread'''
+    global pause_event
     while True:
+        pause_event.wait()
         with renaming_lock:
             global mpstate
             # if renaming_file:
